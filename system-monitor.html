@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casbin Documentation - Query Language Reference</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1b1b1d;
+            --bg-secondary: #242526;
+            --bg-tertiary: #2a2a2c;
+            --bg-code: #090a11;
+            --bg-search: #090a11;
+            --text-primary: #e3e3e3;
+            --text-secondary: #b0b0b0;
+            --text-muted: #787878;
+            --accent: #6366f1;
+            --accent-light: #3730a3;
+            --accent-dim: #818cf8;
+            --border: #3a3a3c;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* Header - Documentation style */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .version-badge {
+            background: var(--accent-light);
+            color: var(--accent-dim);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            background: var(--accent-light);
+            color: var(--accent-dim);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-search);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .search-box:hover {
+            border-color: var(--accent);
+        }
+
+        .search-shortcut {
+            background: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            border: 1px solid var(--border);
+        }
+
+        /* Main content */
+        .main {
+            display: flex;
+            min-height: calc(100vh - 65px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            overflow-y: auto;
+            position: sticky;
+            top: 65px;
+            height: calc(100vh - 65px);
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-title {
+            padding: 8px 24px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .sidebar-item {
+            padding: 8px 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .sidebar-item.active {
+            background: var(--accent-light);
+            color: var(--accent-dim);
+            border-left-color: var(--accent);
+            font-weight: 500;
+        }
+
+        .sidebar-item-icon {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+
+        .page-indicator {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-left: auto;
+            background: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Content area */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+
+        .content-header {
+            padding: 32px 0 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 32px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            color: var(--accent);
+        }
+
+        .content-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .content-title h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .content-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .page-info {
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 0 12px;
+        }
+
+        /* Documentation content - the main reading area */
+        .doc-content {
+            flex: 1;
+            padding-bottom: 64px;
+        }
+
+        .doc-section {
+            margin-bottom: 32px;
+        }
+
+        .doc-section h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .doc-paragraph {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .doc-code {
+            background: var(--bg-code);
+            color: #e2e8f0;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+
+        .doc-note {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+
+        .doc-note-title {
+            font-weight: 600;
+            color: var(--accent-dim);
+            margin-bottom: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        .doc-note p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .doc-list {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        .doc-list li {
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .inline-code {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            color: var(--accent-dim);
+        }
+
+        /* Import zone */
+        .import-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            color: var(--text-secondary);
+        }
+
+        .import-box {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 60px 80px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .import-box:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .import-box.dragover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .import-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .import-text {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .import-hint {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Panic screen - looks like a loading/building docs page */
+        .panic-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+        }
+
+        .panic-screen.active {
+            display: flex;
+        }
+
+        .panic-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .panic-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .panic-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .panic-text {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .panic-subtext {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .panic-progress {
+            width: 300px;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .panic-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dim) 100%);
+            width: 67%;
+            animation: progress 2.5s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 15%; }
+            50% { width: 85%; }
+            100% { width: 15%; }
+        }
+
+        .panic-tasks {
+            margin-top: 24px;
+            text-align: left;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .panic-task {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .panic-task.done {
+            color: var(--success);
+        }
+
+        .panic-task.active {
+            color: var(--text-secondary);
+        }
+
+        /* Keyboard shortcut hint */
+        .shortcut-hint {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .shortcut-hint.visible {
+            opacity: 1;
+        }
+
+        kbd {
+            background: var(--bg-tertiary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            margin: 0 3px;
+            font-family: inherit;
+            font-size: 11px;
+        }
+
+        /* Loading state */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            color: var(--text-secondary);
+            gap: 16px;
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Table of contents on right */
+        .toc {
+            width: 220px;
+            padding: 24px;
+            position: sticky;
+            top: 89px;
+            height: fit-content;
+        }
+
+        .toc-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 6px 0;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            border-left: 2px solid var(--border);
+            padding-left: 12px;
+            margin-left: 2px;
+            transition: all 0.2s;
+        }
+
+        .toc-link:hover {
+            color: var(--accent);
+            border-left-color: var(--accent);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .toc {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none;
+            }
+            .content {
+                padding: 0 24px;
+            }
+        }
+
+        /* Character/Element links */
+        .entity-link {
+            color: #f0abfc;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .entity-link:hover {
+            color: #e879f9;
+            text-decoration-style: solid;
+        }
+
+        .entity-link.character {
+            color: #67e8f9;
+        }
+
+        .entity-link.character:hover {
+            color: #22d3ee;
+        }
+
+        .entity-link.location {
+            color: #86efac;
+        }
+
+        .entity-link.location:hover {
+            color: #4ade80;
+        }
+
+        .entity-link.item {
+            color: #fcd34d;
+        }
+
+        .entity-link.item:hover {
+            color: #fbbf24;
+        }
+
+        /* Entity card modal */
+        .entity-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .entity-modal.active {
+            display: flex;
+        }
+
+        .entity-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .entity-card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .entity-card-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .entity-card-title h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .entity-type-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .entity-type-badge.character {
+            background: rgba(103, 232, 249, 0.2);
+            color: #67e8f9;
+        }
+
+        .entity-type-badge.location {
+            background: rgba(134, 239, 172, 0.2);
+            color: #86efac;
+        }
+
+        .entity-type-badge.item {
+            background: rgba(252, 211, 77, 0.2);
+            color: #fcd34d;
+        }
+
+        .entity-type-badge.other {
+            background: rgba(240, 171, 252, 0.2);
+            color: #f0abfc;
+        }
+
+        .entity-card-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .entity-card-close:hover {
+            color: var(--text-primary);
+        }
+
+        .entity-card-body {
+            padding: 24px;
+        }
+
+        .entity-card-description {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .entity-card-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .entity-meta-item {
+            display: flex;
+            gap: 12px;
+        }
+
+        .entity-meta-label {
+            color: var(--text-muted);
+            font-size: 13px;
+            min-width: 100px;
+        }
+
+        .entity-meta-value {
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        /* Entity manager panel */
+        .entity-manager {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            z-index: 9998;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .entity-manager.active {
+            right: 0;
+        }
+
+        .entity-manager-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .entity-manager-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .entity-manager-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .entity-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .entity-form-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-add-entity {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-add-entity:hover {
+            background: var(--accent-dim);
+        }
+
+        .btn-cancel-edit {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel-edit:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        .entity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .entity-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .entity-list-item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .entity-list-item-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .entity-list-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .entity-list-item-actions button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 14px;
+        }
+
+        .entity-list-item-actions button:hover {
+            color: var(--text-primary);
+        }
+
+        .entity-list-item-actions button.delete:hover {
+            color: #ef4444;
+        }
+
+        /* TOC entities section */
+        .toc-entities {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .toc-entity-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            padding-left: 12px;
+            border-left: 2px solid var(--border);
+            margin-left: 2px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .toc-entity-item:hover {
+            border-left-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .toc-entity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .toc-entity-dot.character {
+            background: #67e8f9;
+        }
+
+        .toc-entity-dot.location {
+            background: #86efac;
+        }
+
+        .toc-entity-dot.item {
+            background: #fcd34d;
+        }
+
+        .toc-entity-dot.other {
+            background: #f0abfc;
+        }
+
+        /* Header fiches button */
+        .btn-header-fiches {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-header-fiches:hover {
+            background: var(--accent-dim);
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Application -->
+    <div class="app">
+        <header class="header">
+            <div class="header-left">
+                <a href="#" class="logo">
+                    <div class="logo-icon">V</div>
+                    <span>Casbin</span>
+                </a>
+                <span class="version-badge">v3.2.1</span>
+                <nav class="header-nav">
+                    <a href="#" class="nav-link active">Documentation</a>
+                    <a href="#" class="nav-link">API Reference</a>
+                    <a href="#" class="nav-link">Examples</a>
+                    <a href="#" class="nav-link">Community</a>
+                </nav>
+            </div>
+            <div class="header-right">
+                <div class="search-box" onclick="document.getElementById('file-input').click()">
+                    <span>Search docs...</span>
+                    <span class="search-shortcut">Ctrl K</span>
+                </div>
+                <button class="btn-header-fiches" onclick="toggleEntityManager()">Fiches</button>
+            </div>
+        </header>
+
+        <main class="main">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Getting Started</div>
+                    <div class="sidebar-item">
+                        <span class="sidebar-item-icon">*</span> Introduction
+                    </div>
+                    <div class="sidebar-item">
+                        <span class="sidebar-item-icon">*</span> Installation
+                    </div>
+                    <div class="sidebar-item active">
+                        <span class="sidebar-item-icon">*</span> Quick Start
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Core Concepts</div>
+                    <div class="sidebar-item">
+                        <span class="sidebar-item-icon">*</span> Data Models
+                    </div>
+                    <div class="sidebar-item">
+                        <span class="sidebar-item-icon">*</span> Query Language
+                    </div>
+                    <div class="sidebar-item">
+                        <span class="sidebar-item-icon">*</span> Indexing
+                    </div>
+                </div>
+                <div class="sidebar-section" id="pages-section" style="display: none;">
+                    <div class="sidebar-title">Document Sections</div>
+                    <div id="pages-list"></div>
+                </div>
+            </aside>
+
+            <section class="content">
+                <div class="content-header">
+                    <div class="breadcrumb">
+                        <a href="#">Docs</a>
+                        <span>/</span>
+                        <a href="#">Core Concepts</a>
+                        <span>/</span>
+                        <span>Query Language</span>
+                    </div>
+                    <div class="content-title">
+                        <h1 id="content-title">Query Language Reference</h1>
+                        <div class="content-nav" id="nav-controls" style="display: none;">
+                            <button class="btn" id="prev-btn" onclick="prevPage()">
+                                <span>Previous</span>
+                            </button>
+                            <span class="page-info" id="page-info">Section 1 of 1</span>
+                            <button class="btn" id="next-btn" onclick="nextPage()">
+                                <span>Next</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="doc-content" id="doc-content">
+                    <div class="import-zone" id="import-zone">
+                        <div class="import-box" id="import-box">
+                            <div class="import-icon">+</div>
+                            <div class="import-text">Import documentation source</div>
+                            <div class="import-hint">Drop a PDF file or click to browse</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="toc" id="toc">
+                <div class="toc-title">On this page</div>
+                <a href="#" class="toc-link">Overview</a>
+                <a href="#" class="toc-link">Basic Syntax</a>
+                <a href="#" class="toc-link">Query Operators</a>
+                <a href="#" class="toc-link">Examples</a>
+            </aside>
+        </main>
+
+        <footer class="footer">
+            <div>
+                <span>Casbin Documentation</span>
+                <span> | </span>
+                <a href="#">Edit this page</a>
+            </div>
+            <div>
+                <span id="doc-status">Ready</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Panic Screen - Documentation build screen -->
+    <div class="panic-screen" id="panic-screen">
+        <header class="header">
+            <div class="header-left">
+                <a href="#" class="logo">
+                    <div class="logo-icon">V</div>
+                    <span>Casbin</span>
+                </a>
+                <span class="version-badge">v3.2.1</span>
+            </div>
+        </header>
+        <div class="panic-content">
+            <div class="panic-logo">
+                <div class="logo-icon" style="width:48px;height:48px;font-size:24px;">V</div>
+                <span>Casbin Docs</span>
+            </div>
+            <div class="panic-spinner"></div>
+            <a href="https://casbin.org/fr/docs/overview/" class="panic-text" style="text-decoration: none; cursor: pointer;">Building documentation...</a>
+            <div class="panic-progress">
+                <div class="panic-progress-bar"></div>
+            </div>
+            <div class="panic-tasks">
+                <div class="panic-task done">* Parsing markdown files</div>
+                <div class="panic-task done">* Generating API references</div>
+                <div class="panic-task active">* Building search index</div>
+                <div class="panic-task">* Optimizing assets</div>
+            </div>
+            <div class="panic-subtext">This may take a moment...</div>
+        </div>
+        <footer class="footer">
+            <div>Powered by VortexDocs v2.1.0</div>
+            <div id="panic-time"></div>
+        </footer>
+    </div>
+
+    <!-- Shortcut Hint -->
+    <div class="shortcut-hint" id="shortcut-hint">
+        <kbd>Esc</kbd> Build mode |
+        <kbd>Left</kbd><kbd>Right</kbd> Navigate |
+        <kbd>Space</kbd> Resume
+    </div>
+
+    <!-- Entity Modal (fiche) -->
+    <div class="entity-modal" id="entity-modal">
+        <div class="entity-card">
+            <div class="entity-card-header">
+                <div class="entity-card-title">
+                    <h2 id="entity-modal-name">Nom</h2>
+                    <span class="entity-type-badge" id="entity-modal-type">Type</span>
+                </div>
+                <button class="entity-card-close" onclick="closeEntityModal()">&times;</button>
+            </div>
+            <div class="entity-card-body">
+                <p class="entity-card-description" id="entity-modal-description">Description...</p>
+                <div class="entity-card-meta" id="entity-modal-meta"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entity Manager Panel -->
+    <div class="entity-manager" id="entity-manager">
+        <div class="entity-manager-header">
+            <h3>Gestion des fiches</h3>
+            <button class="entity-card-close" onclick="toggleEntityManager()">&times;</button>
+        </div>
+        <div class="entity-manager-body">
+            <div class="entity-form">
+                <input type="hidden" id="entity-edit-id" value="">
+                <div class="form-group">
+                    <label>Nom</label>
+                    <input type="text" id="entity-name" placeholder="Ex: Jean Valjean">
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="entity-type">
+                        <option value="character">Personnage</option>
+                        <option value="location">Lieu</option>
+                        <option value="item">Objet</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="entity-description" placeholder="Description du personnage/element..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Notes (optionnel)</label>
+                    <textarea id="entity-notes" placeholder="Notes supplementaires..."></textarea>
+                </div>
+                <div class="entity-form-buttons">
+                    <button class="btn-add-entity" id="btn-save-entity" onclick="saveEntity()">Ajouter la fiche</button>
+                    <button class="btn-cancel-edit" id="btn-cancel-edit" onclick="cancelEdit()" style="display: none;">Annuler</button>
+                </div>
+            </div>
+            <div class="entity-list" id="entity-list"></div>
+        </div>
+    </div>
+
+    <input type="file" id="file-input" accept=".pdf">
+
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // State
+        let pdfDoc = null;
+        let pages = [];
+        let currentPage = 0;
+        let isPanicMode = false;
+
+        // Entities (fiches)
+        let entities = JSON.parse(localStorage.getItem('entities') || '[]');
+
+        // DOM Elements
+        const fileInput = document.getElementById('file-input');
+        const docContent = document.getElementById('doc-content');
+        const importZone = document.getElementById('import-zone');
+        const importBox = document.getElementById('import-box');
+        const pagesSection = document.getElementById('pages-section');
+        const pagesList = document.getElementById('pages-list');
+        const navControls = document.getElementById('nav-controls');
+        const pageInfo = document.getElementById('page-info');
+        const docStatus = document.getElementById('doc-status');
+        const panicScreen = document.getElementById('panic-screen');
+        const shortcutHint = document.getElementById('shortcut-hint');
+        const contentTitle = document.getElementById('content-title');
+        const toc = document.getElementById('toc');
+
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            document.getElementById('panic-time').textContent = timeStr;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // File handling
+        fileInput.addEventListener('change', handleFile);
+        importBox.addEventListener('click', () => fileInput.click());
+
+        importBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            importBox.classList.add('dragover');
+        });
+
+        importBox.addEventListener('dragleave', () => {
+            importBox.classList.remove('dragover');
+        });
+
+        importBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            importBox.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'application/pdf') {
+                loadPDF(file);
+            }
+        });
+
+        async function handleFile(e) {
+            const file = e.target.files[0];
+            if (file) {
+                loadPDF(file);
+            }
+        }
+
+        async function loadPDF(file) {
+            docContent.innerHTML = '<div class="loading"><div class="loading-spinner"></div><span>Loading documentation...</span></div>';
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+                pages = [];
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const text = textContent.items.map(item => item.str).join(' ');
+                    pages.push(text);
+                }
+
+                // Save to localStorage
+                localStorage.setItem('pdf_pages', JSON.stringify(pages));
+                localStorage.setItem('pdf_current_page', '0');
+                localStorage.setItem('pdf_filename', file.name);
+
+                currentPage = 0;
+                renderCurrentPage();
+                updateSidebar();
+                updateTOC();
+
+                docStatus.textContent = `${pages.length} sections loaded`;
+
+            } catch (error) {
+                docContent.innerHTML = `<div class="loading" style="color: #ef4444;">Error loading document: ${error.message}</div>`;
+            }
+        }
+
+        function renderCurrentPage() {
+            if (pages.length === 0) return;
+
+            const text = pages[currentPage];
+            const paragraphs = text.split(/(?<=[.!?])\s{2,}|[\n\r]+/).filter(p => p.trim().length > 20);
+
+            let html = '<div class="doc-section">';
+
+            paragraphs.forEach((para, index) => {
+                const trimmed = para.trim();
+
+                // Simulate different content types for variety
+                if (index === 0 && trimmed.length < 100) {
+                    html += `<h2>${highlightEntities(trimmed)}</h2>`;
+                } else if (trimmed.length < 60 && index > 0) {
+                    html += `<h3 style="font-size:16px;margin-top:24px;margin-bottom:12px;">${highlightEntities(trimmed)}</h3>`;
+                } else {
+                    html += `<p class="doc-paragraph">${highlightEntities(trimmed)}</p>`;
+                }
+
+                // Add occasional code blocks or notes for visual variety
+                if (index === 2 && paragraphs.length > 4) {
+                    html += `<div class="doc-note">
+                        <div class="doc-note-title">Note</div>
+                        <p>This section contains important information. Make sure to review the following content carefully.</p>
+                    </div>`;
+                }
+            });
+
+            html += '</div>';
+
+            docContent.innerHTML = html;
+
+            // Update UI
+            pageInfo.textContent = `Section ${currentPage + 1} of ${pages.length}`;
+            navControls.style.display = 'flex';
+            contentTitle.textContent = `Section ${currentPage + 1}`;
+
+            // Update sidebar active state
+            document.querySelectorAll('#pages-list .sidebar-item').forEach((item, index) => {
+                item.classList.toggle('active', index === currentPage);
+            });
+
+            // Save current page
+            localStorage.setItem('pdf_current_page', currentPage.toString());
+
+            // Update TOC with entities found on this page
+            updateTOCWithEntities(text);
+
+            // Scroll to top
+            docContent.scrollTop = 0;
+        }
+
+        function updateSidebar() {
+            pagesSection.style.display = 'block';
+            pagesList.innerHTML = '';
+
+            pages.forEach((_, index) => {
+                const item = document.createElement('div');
+                item.className = `sidebar-item ${index === currentPage ? 'active' : ''}`;
+                item.innerHTML = `
+                    <span class="sidebar-item-icon">*</span>
+                    Section ${index + 1}
+                    <span class="page-indicator">${index + 1}</span>
+                `;
+                item.onclick = () => goToPage(index);
+                pagesList.appendChild(item);
+            });
+        }
+
+        function updateTOC() {
+            // Generate fake TOC based on page count
+            const tocHtml = pages.slice(0, 5).map((_, i) =>
+                `<a href="#" class="toc-link" onclick="goToPage(${i}); return false;">Section ${i + 1}</a>`
+            ).join('');
+
+            toc.innerHTML = `
+                <div class="toc-title">Document sections</div>
+                ${tocHtml}
+            `;
+        }
+
+        function goToPage(index) {
+            if (index >= 0 && index < pages.length) {
+                currentPage = index;
+                renderCurrentPage();
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                renderCurrentPage();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < pages.length - 1) {
+                currentPage++;
+                renderCurrentPage();
+            }
+        }
+
+        function togglePanicMode() {
+            isPanicMode = !isPanicMode;
+            panicScreen.classList.toggle('active', isPanicMode);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Escape - Panic mode
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                togglePanicMode();
+            }
+
+            // Space - exit panic mode
+            if (e.key === ' ' && isPanicMode) {
+                e.preventDefault();
+                togglePanicMode();
+            }
+
+            // Arrow keys - navigation (only when not in panic mode)
+            if (!isPanicMode && pages.length > 0) {
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    prevPage();
+                }
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    nextPage();
+                }
+            }
+        });
+
+        // Show shortcut hint on first load
+        setTimeout(() => {
+            shortcutHint.classList.add('visible');
+            setTimeout(() => {
+                shortcutHint.classList.remove('visible');
+            }, 5000);
+        }, 1000);
+
+        // Load from localStorage on startup
+        window.addEventListener('load', () => {
+            const savedPages = localStorage.getItem('pdf_pages');
+            const savedPage = localStorage.getItem('pdf_current_page');
+            const savedFilename = localStorage.getItem('pdf_filename');
+
+            if (savedPages) {
+                try {
+                    pages = JSON.parse(savedPages);
+                    currentPage = parseInt(savedPage) || 0;
+
+                    if (pages.length > 0) {
+                        renderCurrentPage();
+                        updateSidebar();
+                        updateTOC();
+                        docStatus.textContent = `${pages.length} sections loaded`;
+                    }
+                } catch (e) {
+                    console.error('Failed to load cached data');
+                }
+            }
+        });
+
+        // Animate panic screen tasks
+        setInterval(() => {
+            if (isPanicMode) {
+                const tasks = document.querySelectorAll('.panic-task');
+                const activeIndex = Array.from(tasks).findIndex(t => t.classList.contains('active'));
+
+                if (activeIndex >= 0 && activeIndex < tasks.length - 1) {
+                    tasks[activeIndex].classList.remove('active');
+                    tasks[activeIndex].classList.add('done');
+                    tasks[activeIndex + 1].classList.add('active');
+                } else if (activeIndex === tasks.length - 1) {
+                    // Reset cycle
+                    tasks.forEach(t => {
+                        t.classList.remove('done', 'active');
+                    });
+                    tasks[0].classList.add('done');
+                    tasks[1].classList.add('done');
+                    tasks[2].classList.add('active');
+                }
+            }
+        }, 2000);
+
+        // ========== ENTITY MANAGEMENT ==========
+
+        const entityModal = document.getElementById('entity-modal');
+        const entityManager = document.getElementById('entity-manager');
+        const entityList = document.getElementById('entity-list');
+
+        // Save entities to localStorage
+        function saveEntities() {
+            localStorage.setItem('entities', JSON.stringify(entities));
+        }
+
+        // Toggle entity manager panel
+        function toggleEntityManager() {
+            entityManager.classList.toggle('active');
+            if (entityManager.classList.contains('active')) {
+                renderEntityList();
+            }
+        }
+
+        // Save entity (add or update)
+        function saveEntity() {
+            const editId = document.getElementById('entity-edit-id').value;
+            const name = document.getElementById('entity-name').value.trim();
+            const type = document.getElementById('entity-type').value;
+            const description = document.getElementById('entity-description').value.trim();
+            const notes = document.getElementById('entity-notes').value.trim();
+
+            if (!name) {
+                alert('Veuillez entrer un nom');
+                return;
+            }
+
+            if (editId) {
+                // Update existing entity
+                const index = entities.findIndex(e => e.id === parseInt(editId));
+                if (index !== -1) {
+                    entities[index] = {
+                        ...entities[index],
+                        name,
+                        type,
+                        description,
+                        notes
+                    };
+                }
+            } else {
+                // Add new entity
+                const entity = {
+                    id: Date.now(),
+                    name,
+                    type,
+                    description,
+                    notes
+                };
+                entities.push(entity);
+            }
+
+            saveEntities();
+            renderEntityList();
+            clearEntityForm();
+
+            // Re-render current page to highlight entity
+            if (pages.length > 0) {
+                renderCurrentPage();
+            }
+        }
+
+        // Edit entity - populate form
+        function editEntity(id) {
+            const entity = entities.find(e => e.id === id);
+            if (!entity) return;
+
+            document.getElementById('entity-edit-id').value = entity.id;
+            document.getElementById('entity-name').value = entity.name;
+            document.getElementById('entity-type').value = entity.type;
+            document.getElementById('entity-description').value = entity.description || '';
+            document.getElementById('entity-notes').value = entity.notes || '';
+
+            document.getElementById('btn-save-entity').textContent = 'Modifier la fiche';
+            document.getElementById('btn-cancel-edit').style.display = 'block';
+
+            // Scroll to form
+            document.querySelector('.entity-form').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Cancel edit
+        function cancelEdit() {
+            clearEntityForm();
+        }
+
+        // Clear form
+        function clearEntityForm() {
+            document.getElementById('entity-edit-id').value = '';
+            document.getElementById('entity-name').value = '';
+            document.getElementById('entity-type').value = 'character';
+            document.getElementById('entity-description').value = '';
+            document.getElementById('entity-notes').value = '';
+
+            document.getElementById('btn-save-entity').textContent = 'Ajouter la fiche';
+            document.getElementById('btn-cancel-edit').style.display = 'none';
+        }
+
+        // Delete entity
+        function deleteEntity(id) {
+            if (confirm('Supprimer cette fiche ?')) {
+                entities = entities.filter(e => e.id !== id);
+                saveEntities();
+                renderEntityList();
+                if (pages.length > 0) {
+                    renderCurrentPage();
+                }
+            }
+        }
+
+        // Render entity list in manager
+        function renderEntityList() {
+            const typeLabels = {
+                character: 'Personnage',
+                location: 'Lieu',
+                item: 'Objet',
+                other: 'Autre'
+            };
+
+            entityList.innerHTML = entities.map(entity => `
+                <div class="entity-list-item">
+                    <div class="entity-list-item-info">
+                        <span class="toc-entity-dot ${entity.type}"></span>
+                        <span class="entity-list-item-name">${escapeHtml(entity.name)}</span>
+                        <span class="entity-type-badge ${entity.type}">${typeLabels[entity.type]}</span>
+                    </div>
+                    <div class="entity-list-item-actions">
+                        <button onclick="showEntityCard(${entity.id})" title="Voir">👁</button>
+                        <button onclick="editEntity(${entity.id})" title="Modifier">✎</button>
+                        <button class="delete" onclick="deleteEntity(${entity.id})" title="Supprimer">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Show entity card modal
+        function showEntityCard(id) {
+            const entity = entities.find(e => e.id === id);
+            if (!entity) return;
+
+            const typeLabels = {
+                character: 'Personnage',
+                location: 'Lieu',
+                item: 'Objet',
+                other: 'Autre'
+            };
+
+            document.getElementById('entity-modal-name').textContent = entity.name;
+
+            const typeBadge = document.getElementById('entity-modal-type');
+            typeBadge.textContent = typeLabels[entity.type];
+            typeBadge.className = `entity-type-badge ${entity.type}`;
+
+            document.getElementById('entity-modal-description').textContent = entity.description || 'Pas de description.';
+
+            const metaHtml = entity.notes ? `
+                <div class="entity-meta-item">
+                    <span class="entity-meta-label">Notes</span>
+                    <span class="entity-meta-value">${escapeHtml(entity.notes)}</span>
+                </div>
+            ` : '';
+
+            document.getElementById('entity-modal-meta').innerHTML = metaHtml;
+
+            entityModal.classList.add('active');
+        }
+
+        // Close entity modal
+        function closeEntityModal() {
+            entityModal.classList.remove('active');
+        }
+
+        // Close modal on background click
+        entityModal.addEventListener('click', (e) => {
+            if (e.target === entityModal) {
+                closeEntityModal();
+            }
+        });
+
+        // Highlight entities in text
+        function highlightEntities(text) {
+            if (entities.length === 0) return escapeHtml(text);
+
+            let result = escapeHtml(text);
+
+            // Sort entities by name length (longest first) to avoid partial replacements
+            const sortedEntities = [...entities].sort((a, b) => b.name.length - a.name.length);
+
+            sortedEntities.forEach(entity => {
+                // Create regex that matches the name (case insensitive, word boundaries)
+                const regex = new RegExp(`\\b(${escapeRegex(entity.name)})\\b`, 'gi');
+                result = result.replace(regex, `<span class="entity-link ${entity.type}" onclick="showEntityCard(${entity.id})">$1</span>`);
+            });
+
+            return result;
+        }
+
+        // Escape special regex characters
+        function escapeRegex(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Find entities present in current page
+        function findEntitiesInPage(text) {
+            const found = [];
+            entities.forEach(entity => {
+                const regex = new RegExp(`\\b${escapeRegex(entity.name)}\\b`, 'gi');
+                if (regex.test(text)) {
+                    found.push(entity);
+                }
+            });
+            return found;
+        }
+
+        // Update TOC with entities found on page
+        function updateTOCWithEntities(pageText) {
+            const foundEntities = findEntitiesInPage(pageText);
+
+            // Generate sections TOC
+            const tocSectionsHtml = pages.slice(0, 5).map((_, i) =>
+                `<a href="#" class="toc-link" onclick="goToPage(${i}); return false;">Section ${i + 1}</a>`
+            ).join('');
+
+            // Generate entities TOC if any found
+            let entitiesHtml = '';
+            if (foundEntities.length > 0) {
+                const entityLinks = foundEntities.map(entity => `
+                    <div class="toc-entity-item" onclick="showEntityCard(${entity.id})">
+                        <span class="toc-entity-dot ${entity.type}"></span>
+                        <span>${escapeHtml(entity.name)}</span>
+                    </div>
+                `).join('');
+
+                entitiesHtml = `
+                    <div class="toc-entities">
+                        <div class="toc-title">Elements sur cette page</div>
+                        ${entityLinks}
+                    </div>
+                `;
+            }
+
+            toc.innerHTML = `
+                <div class="toc-title">Document sections</div>
+                ${tocSectionsHtml}
+                ${entitiesHtml}
+            `;
+        }
+
+        // Load entities list on startup
+        renderEntityList();
+    </script>
+</body>
+</html>
