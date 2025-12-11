@@ -1262,6 +1262,11 @@
                     <textarea id="entity-description" placeholder="Description du personnage/element..."></textarea>
                 </div>
                 <div class="form-group">
+                    <label>Alias / Variantes (optionnel)</label>
+                    <input type="text" id="entity-aliases" placeholder="Ex: Laurent, M. Delahousse (séparés par des virgules)">
+                    <small style="color: var(--text-muted); font-size: 11px;">Autres noms qui référencent cette fiche</small>
+                </div>
+                <div class="form-group">
                     <label>Notes (optionnel)</label>
                     <textarea id="entity-notes" placeholder="Notes supplementaires..."></textarea>
                 </div>
@@ -1593,7 +1598,14 @@
             const name = document.getElementById('entity-name').value.trim();
             const type = document.getElementById('entity-type').value;
             const description = document.getElementById('entity-description').value.trim();
+            const aliasesRaw = document.getElementById('entity-aliases').value.trim();
             const notes = document.getElementById('entity-notes').value.trim();
+
+            // Parse aliases: split by comma, trim, filter empty
+            const aliases = aliasesRaw
+                .split(',')
+                .map(a => a.trim())
+                .filter(a => a.length > 0);
 
             if (!name) {
                 alert('Veuillez entrer un nom');
@@ -1609,6 +1621,7 @@
                         name,
                         type,
                         description,
+                        aliases,
                         notes
                     };
                 }
@@ -1619,6 +1632,7 @@
                     name,
                     type,
                     description,
+                    aliases,
                     notes
                 };
                 entities.push(entity);
@@ -1643,6 +1657,7 @@
             document.getElementById('entity-name').value = entity.name;
             document.getElementById('entity-type').value = entity.type;
             document.getElementById('entity-description').value = entity.description || '';
+            document.getElementById('entity-aliases').value = (entity.aliases || []).join(', ');
             document.getElementById('entity-notes').value = entity.notes || '';
 
             document.getElementById('btn-save-entity').textContent = 'Modifier la fiche';
@@ -1663,6 +1678,7 @@
             document.getElementById('entity-name').value = '';
             document.getElementById('entity-type').value = 'character';
             document.getElementById('entity-description').value = '';
+            document.getElementById('entity-aliases').value = '';
             document.getElementById('entity-notes').value = '';
 
             document.getElementById('btn-save-entity').textContent = 'Ajouter la fiche';
@@ -1690,11 +1706,15 @@
                 other: 'Autre'
             };
 
-            entityList.innerHTML = entities.map(entity => `
+            entityList.innerHTML = entities.map(entity => {
+                const aliasText = (entity.aliases && entity.aliases.length > 0)
+                    ? `<span style="color: var(--text-muted); font-size: 11px; margin-left: 6px;">(${entity.aliases.map(a => escapeHtml(a)).join(', ')})</span>`
+                    : '';
+                return `
                 <div class="entity-list-item">
                     <div class="entity-list-item-info">
                         <span class="toc-entity-dot ${entity.type}"></span>
-                        <span class="entity-list-item-name">${escapeHtml(entity.name)}</span>
+                        <span class="entity-list-item-name">${escapeHtml(entity.name)}${aliasText}</span>
                         <span class="entity-type-badge ${entity.type}">${typeLabels[entity.type]}</span>
                     </div>
                     <div class="entity-list-item-actions">
@@ -1703,7 +1723,8 @@
                         <button class="delete" onclick="deleteEntity(${entity.id})" title="Supprimer">✕</button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         // Show entity card modal
@@ -1726,12 +1747,27 @@
 
             document.getElementById('entity-modal-description').textContent = entity.description || 'Pas de description.';
 
-            const metaHtml = entity.notes ? `
-                <div class="entity-meta-item">
-                    <span class="entity-meta-label">Notes</span>
-                    <span class="entity-meta-value">${escapeHtml(entity.notes)}</span>
-                </div>
-            ` : '';
+            let metaHtml = '';
+
+            // Show aliases if any
+            if (entity.aliases && entity.aliases.length > 0) {
+                metaHtml += `
+                    <div class="entity-meta-item">
+                        <span class="entity-meta-label">Alias</span>
+                        <span class="entity-meta-value">${entity.aliases.map(a => escapeHtml(a)).join(', ')}</span>
+                    </div>
+                `;
+            }
+
+            // Show notes if any
+            if (entity.notes) {
+                metaHtml += `
+                    <div class="entity-meta-item">
+                        <span class="entity-meta-label">Notes</span>
+                        <span class="entity-meta-value">${escapeHtml(entity.notes)}</span>
+                    </div>
+                `;
+            }
 
             document.getElementById('entity-modal-meta').innerHTML = metaHtml;
 
@@ -1756,12 +1792,25 @@
 
             let result = escapeHtml(text);
 
-            // Sort entities by name length (longest first) to avoid partial replacements
-            const sortedEntities = [...entities].sort((a, b) => b.name.length - a.name.length);
+            // Build a list of all terms (name + aliases) with their entity reference
+            const allTerms = [];
+            entities.forEach(entity => {
+                // Add the main name
+                allTerms.push({ term: entity.name, entity });
+                // Add all aliases
+                if (entity.aliases && entity.aliases.length > 0) {
+                    entity.aliases.forEach(alias => {
+                        allTerms.push({ term: alias, entity });
+                    });
+                }
+            });
 
-            sortedEntities.forEach(entity => {
-                // Create regex that matches the name (case insensitive, word boundaries)
-                const regex = new RegExp(`\\b(${escapeRegex(entity.name)})\\b`, 'gi');
+            // Sort by term length (longest first) to avoid partial replacements
+            allTerms.sort((a, b) => b.term.length - a.term.length);
+
+            allTerms.forEach(({ term, entity }) => {
+                // Create regex that matches the term (case insensitive, word boundaries)
+                const regex = new RegExp(`\\b(${escapeRegex(term)})\\b`, 'gi');
                 result = result.replace(regex, `<span class="entity-link ${entity.type}" onclick="showEntityCard(${entity.id})">$1</span>`);
             });
 
@@ -1777,9 +1826,21 @@
         function findEntitiesInPage(text) {
             const found = [];
             entities.forEach(entity => {
-                const regex = new RegExp(`\\b${escapeRegex(entity.name)}\\b`, 'gi');
-                if (regex.test(text)) {
+                // Check main name
+                const nameRegex = new RegExp(`\\b${escapeRegex(entity.name)}\\b`, 'gi');
+                if (nameRegex.test(text)) {
                     found.push(entity);
+                    return; // Already found, skip alias check
+                }
+                // Check aliases
+                if (entity.aliases && entity.aliases.length > 0) {
+                    for (const alias of entity.aliases) {
+                        const aliasRegex = new RegExp(`\\b${escapeRegex(alias)}\\b`, 'gi');
+                        if (aliasRegex.test(text)) {
+                            found.push(entity);
+                            break; // Found via alias, no need to check more
+                        }
+                    }
                 }
             });
             return found;
