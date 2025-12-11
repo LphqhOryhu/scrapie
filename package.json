@@ -2,7 +2,7 @@
   "name": "supervision-hugo",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "system-monitor.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
